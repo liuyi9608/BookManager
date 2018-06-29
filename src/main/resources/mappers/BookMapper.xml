@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dao.BookDao">
+
+    <resultMap type="Book" id="BookResult">
+        <result property="id" column="id"/>
+        <result property="bookname" column="bookname"/>
+        <result property="writer" column="writer"/>
+        <result property="price" column="price"/>
+
+        <association property="category" column="category_id" select="com.dao.CategoryDao.findById"></association>
+    </resultMap>
+    <select id="list" parameterType="Map" resultMap="BookResult">
+        SELECT * FROM t_book
+        <where>
+            <if test="bookname!=null and bookname!='' ">
+                AND bookname LIKE #{bookname}
+            </if>
+            <if test="category_id!=null and category_id!='' ">
+                AND category_id=#{category_id}
+            </if>
+
+        </where>
+        ORDER BY createTime desc
+        <if test="start!=null and size!=null">
+            limit #{start},#{size}
+        </if>
+
+    </select>
+
+    <select id="findById" parameterType="Integer" resultMap="BookResult">
+        select * from t_book where id=#{id}
+    </select>
+    <select id="getTotal" parameterType="Map" resultType="Long">
+        SELECT COUNT(*) FROM t_book
+        <where>
+            <if test="bookname!=null and bookname!='' ">
+                AND bookname LIKE #{bookname}
+            </if>
+            <if test="category_id!=null and category_id!='' ">
+                AND category_id=#{category_id}
+            </if>
+        </where>
+    </select>
+
+    <delete id="delete" parameterType="Integer">
+        DELETE FROM t_book where id = #{id}
+    </delete>
+
+    <insert id="save" useGeneratedKeys="true" keyProperty="id" parameterType="Book">
+        insert into t_book values(null,#{bookname},#{writer},#{price},#{category.id},now(),#{image})
+    </insert>
+    <update id="update" parameterType="Book">
+        update t_book
+        <set>
+            <if test="bookname!=null and bookname!=''">
+                bookname=#{bookname},
+            </if>
+            <if test="writer!=null and writer!=''">
+                writer=#{writer},
+            </if>
+            <if test="price!=null and price!=''">
+                price=#{price},
+            </if>
+            <if test="category.id!=null">
+                category_id=#{category.id},
+            </if>
+            <if test="image!=null">
+                image=#{image},
+            </if>
+
+        </set>
+        where id=#{id}
+    </update>
+</mapper>

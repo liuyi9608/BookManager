@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dao.OrderDao">
+
+    <resultMap type="Order" id="OrderResult">
+        <id column="oid" property="id"></id>
+        <result property="orderNo" column="orderNo"/>
+        <result property="totalprices" column="totalprices"/>
+        <result property="orderdate" column="orderdate"/>
+        <result property="orderstatus" column="orderstatus"/>
+        <result property="receiverAddress" column="receiverAddress"/>
+        <result property="receiverName" column="receiverName"/>
+        <result property="receiverPhone" column="receiverPhone"/>
+        <association property="user" javaType="User">
+            <id column="uid" property="id"></id>
+            <result property="username" column="username"/>
+        </association>
+        <collection property="orderItemList" ofType="OrderItem">
+            <id column="id" property="id"></id>
+            <result property="buynum" column="buynum"/>
+            <association property="book" javaType="Book">
+                <id column="bid" property="id"></id>
+                <result property="bookname" column="bookname"/>
+                <result property="writer" column="writer"/>
+                <result property="price" column="price"/>
+                <result property="image" column="image"/>
+            </association>
+            <association property="order" javaType="Order">
+                <id column="oid" property="id"></id>
+                <result property="orderNo" column="orderNo"/>
+                <result property="totalprices" column="totalprices"/>
+                <result property="orderdate" column="orderdate"/>
+                <result property="orderstatus" column="orderstatus"/>
+                <result property="receiverAddress" column="receiverAddress"/>
+                <result property="receiverName" column="receiverName"/>
+                <result property="receiverPhone" column="receiverPhone"/>
+            </association>
+        </collection>
+    </resultMap>
+    <insert id="saveOrder" useGeneratedKeys="true" keyProperty="id" parameterType="Order">
+        insert into t_order values(null,#{totalprices},#{orderNo},now(),#{orderstatus},#{user.id},#{receiverAddress},#{receiverName},#{receiverPhone})
+    </insert>
+    <update id="updateOrder" parameterType="Order">
+        update t_order
+        <set>
+            <if test="totalprices!=null">
+                totalprices=#{totalprices},
+            </if>
+            <if test="orderNo!=null and orderNo!=''">
+                orderNo=#{orderNo},
+            </if>
+            <if test="orderstatus!=null and orderstatus!=''">
+                orderstatus=#{orderstatus},
+            </if>
+            <if test="receiverAddress!=null and receiverAddress!=''">
+                receiverAddress=#{receiverAddress},
+            </if>
+            <if test="receiverName!=null and receiverName!=''">
+                receiverName=#{receiverName},
+            </if>
+            <if test="receiverPhone!=null and receiverPhone!=''">
+                receiverPhone=#{receiverPhone},
+            </if>
+        </set>
+        where id=#{id}
+    </update>
+    <insert id="saveOrderItem"  useGeneratedKeys="true" keyProperty="id" parameterType="OrderItem">
+        insert into t_orderItem values(NULL,#{order.id},#{book.id},#{buynum})
+    </insert>
+    <delete id="delete" parameterType="Integer">
+        DELETE FROM t_order where id = #{id}
+    </delete>
+    <select id="list" resultMap="OrderResult" >
+        SELECT
+        o.id oid,o.orderdate,o.orderNo,o.orderstatus,o.receiverAddress,o.receiverName,o.receiverPhone,o.totalprices,o.user_id ouid,
+        b.id bid,b.bookname,b.image,b.price,b.writer,
+        u.id uid,u.username,u.address,u.tel,
+        oi.id oi_id,oi.order_id,oi.book_id,oi.buynum
+        FROM
+        t_order o,
+        t_orderitem oi,
+        t_book b,
+        t_user u
+        <where>
+            o.id = oi.order_id AND b.id = oi.book_id AND u.id=o.user_id
+            <if test="orderNo!=null and orderNo!='' ">
+                AND orderNo LIKE #{orderNo}
+            </if>
+        </where>
+        ORDER BY orderdate desc
+        <if test="start!=null and size!=null">
+            limit #{start},#{size}
+        </if>
+    </select>
+    <select id="getTotal" resultType="Long" parameterType="map">
+        SELECT COUNT(*) FROM t_order
+    </select>
+    <select id="findById" resultMap="OrderResult" parameterType="Integer">
+        SELECT
+        o.id oid,o.orderdate,o.orderNo,o.orderstatus,o.receiverAddress,o.receiverName,o.receiverPhone,o.totalprices,o.user_id ouid,
+        b.id bid,b.bookname,b.image,b.price,b.writer,
+        u.id uid,u.username,u.address,u.tel,
+        oi.id oi_id,oi.order_id,oi.book_id,oi.buynum
+        FROM
+        t_order o,
+        t_orderitem oi,
+        t_book b,
+        t_user u
+        WHERE o.id = oi.order_id AND b.id = oi.book_id AND u.id=o.user_id AND o.id=#{id}
+
+    </select>
+
+
+</mapper>

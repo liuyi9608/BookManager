@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dao.UserDao">
+
+    <resultMap type="User" id="UserResult">
+        <result property="id" column="id"/>
+        <result property="username" column="username"/>
+        <result property="password" column="password"/>
+        <result property="email" column="email"/>
+        <result property="joindate" column="joindate"/>
+        <result property="address" column="address"/>
+        <result property="tel" column="tel"/>
+        <result property="userstatus" column="userstatus"/>
+    </resultMap>
+    <resultMap type="Order" id="OrderResult">
+        <id column="oid" property="id"></id>
+        <result property="orderNo" column="orderNo"/>
+        <result property="totalprices" column="totalprices"/>
+        <result property="orderdate" column="orderdate"/>
+        <result property="orderstatus" column="orderstatus"/>
+        <result property="receiverAddress" column="receiverAddress"/>
+        <result property="receiverName" column="receiverName"/>
+        <result property="receiverPhone" column="receiverPhone"/>
+        <association property="user" javaType="User">
+            <id column="uid" property="id"></id>
+            <result property="username" column="username"/>
+        </association>
+        <collection property="orderItemList" ofType="OrderItem">
+            <id column="id" property="id"></id>
+            <result property="buynum" column="buynum"/>
+            <association property="book" javaType="Book">
+                <id column="bid" property="id"></id>
+                <result property="bookname" column="bookname"/>
+                <result property="writer" column="writer"/>
+                <result property="price" column="price"/>
+                <result property="image" column="image"/>
+            </association>
+            <association property="order" javaType="Order">
+                <id column="oid" property="id"></id>
+                <result property="orderNo" column="orderNo"/>
+                <result property="totalprices" column="totalprices"/>
+                <result property="orderdate" column="orderdate"/>
+                <result property="orderstatus" column="orderstatus"/>
+                <result property="receiverAddress" column="receiverAddress"/>
+                <result property="receiverName" column="receiverName"/>
+                <result property="receiverPhone" column="receiverPhone"/>
+            </association>
+        </collection>
+    </resultMap>
+    <update id="update" parameterType="User">
+        update t_user
+        <set>
+            <if test="password!=null and password!=''">
+                password=#{password},
+            </if>
+            <if test="address!=null and address!=''">
+                address=#{address},
+            </if>
+            <if test="email!=null and email!=''">
+                email=#{email},
+            </if>
+            <if test="tel!=null and tel!=''">
+                tel=#{tel},
+            </if>
+        </set>
+    </update>
+
+    <select id="getByUserName" parameterType="String" resultMap="UserResult">
+        SELECT  * FROM t_user WHERE userName= #{userName}
+    </select>
+    <select id="findById" resultType="com.entity.User">
+        SELECT  * FROM t_user WHERE id= #{id}
+    </select>
+
+    <select id="userOrderlist" resultMap="OrderResult" >
+        SELECT
+        o.id oid,o.orderdate,o.orderNo,o.orderstatus,o.receiverAddress,o.receiverName,o.receiverPhone,o.totalprices,o.user_id ouid,
+        b.id bid,b.bookname,b.image,b.price,b.writer,
+        u.id uid,u.username,u.address,u.tel,
+        oi.id oi_id,oi.order_id,oi.book_id,oi.buynum
+        FROM
+        t_order o,
+        t_orderitem oi,
+        t_book b,
+        t_user u
+        <where>
+            o.id = oi.order_id AND b.id = oi.book_id AND u.id=o.user_id AND u.id=#{id}
+            <if test="orderNo!=null and orderNo!='' ">
+                AND orderNo LIKE #{orderNo}
+            </if>
+        </where>
+        ORDER BY orderdate desc
+        <if test="start!=null and size!=null">
+            limit #{start},#{size}
+        </if>
+
+    </select>
+    <select id="getTotal" resultType="Long" parameterType="map">
+        SELECT COUNT(*) FROM t_order
+    </select>
+    <insert id="addUser" parameterType="User">
+        insert into t_user values(null,#{username},#{password},#{email},now(),#{address},#{tel},0)
+    </insert>
+
+
+</mapper>
